@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Order Page</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">
+      <img src="images/logo.jpg" alt="Logo" />
+    </div>
+    <nav class="site-nav">
+      <button class="nav-button" onclick="window.location.href='index.html'">Home</button>
+      <button class="nav-button">Order</button>
+    </nav>
+  </header>
+
+  <main class="order-section">
+    <h1>Order Your Cookies</h1>
+    <div class="cookie-list">
+
+      <!-- Example Cookie Item -->
+      <div class="cookie-item" data-price="10">
+        <img src="images/chocolate-chip.jpg" alt="Chocolate Chip Cookie">
+        <span class="cookie-name">Chocolate Chip</span>
+        <div class="quantity-controls">
+          <button class="minus">−</button>
+          <span class="quantity">0</span>
+          <button class="plus">+</button>
+        </div>
+        <span class="cookie-price">₱10</span>
+      </div>
+
+      <div class="cookie-item" data-price="12">
+        <img src="images/oatmeal-raisin.jpg" alt="Oatmeal Raisin Cookie">
+        <span class="cookie-name">Oatmeal Raisin</span>
+        <div class="quantity-controls">
+          <button class="minus">−</button>
+          <span class="quantity">0</span>
+          <button class="plus">+</button>
+        </div>
+        <span class="cookie-price">₱12</span>
+      </div>
+
+      <div class="cookie-item" data-price="15">
+        <img src="images/peanut-butter.jpg" alt="Peanut Butter Cookie">
+        <span class="cookie-name">Peanut Butter</span>
+        <div class="quantity-controls">
+          <button class="minus">−</button>
+          <span class="quantity">0</span>
+          <button class="plus">+</button>
+        </div>
+        <span class="cookie-price">₱15</span>
+      </div>
+
+    </div>
+
+    <div class="order-summary">
+      <h2>Total Orders</h2>
+      <ul id="order-list"></ul>
+      <p id="total-price">Total Price: ₱0</p>
+
+      <!-- Pickup form -->
+      <h3>Pickup Details</h3>
+      <form id="pickup-form">
+        <label for="customer-name">Name:</label><br>
+        <input type="text" id="customer-name" name="customer-name" required><br><br>
+
+        <label for="contact-number">Contact Number:</label><br>
+        <input type="tel" id="contact-number" name="contact-number" required><br><br>
+
+        <label for="pickup-location">Pickup Location:</label><br>
+        <select id="pickup-location" name="pickup-location" required>
+          <option value="MMCL">MMCL</option>
+          <option value="Frisbee Spots">Frisbee Spots</option>
+        </select><br><br>
+
+        <label for="pickup-date">Pickup Date:</label><br>
+        <input type="date" id="pickup-date" name="pickup-date" required><br><br>
+
+        <button type="submit">Submit Order</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const cookieItems = document.querySelectorAll('.cookie-item');
+    const orderList = document.getElementById('order-list');
+    const totalPriceEl = document.getElementById('total-price');
+
+    cookieItems.forEach(item => {
+      const minusBtn = item.querySelector('.minus');
+      const plusBtn = item.querySelector('.plus');
+      const qtyEl = item.querySelector('.quantity');
+
+      minusBtn.addEventListener('click', () => {
+        let qty = parseInt(qtyEl.textContent);
+        if(qty > 0) qty--;
+        qtyEl.textContent = qty;
+        updateSummary();
+      });
+
+      plusBtn.addEventListener('click', () => {
+        let qty = parseInt(qtyEl.textContent);
+        qty++;
+        qtyEl.textContent = qty;
+        updateSummary();
+      });
+    });
+
+    function updateSummary() {
+      orderList.innerHTML = '';
+      let total = 0;
+
+      cookieItems.forEach(item => {
+        const name = item.querySelector('.cookie-name').textContent;
+        const qty = parseInt(item.querySelector('.quantity').textContent);
+        const price = parseInt(item.dataset.price);
+        if(qty > 0){
+          const li = document.createElement('li');
+          li.textContent = `${qty} × ${name} - ₱${qty * price}`;
+          orderList.appendChild(li);
+          total += qty * price;
+        }
+      });
+
+      totalPriceEl.textContent = `Total Price: ₱${total}`;
+    }
+
+    document.getElementById('pickup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Collect order items
+      const orders = [];
+      cookieItems.forEach(item => {
+        const name = item.querySelector('.cookie-name').textContent;
+        const qty = parseInt(item.querySelector('.quantity').textContent);
+        const price = parseInt(item.dataset.price);
+        if (qty > 0) {
+          orders.push({name, quantity: qty, price: qty * price});
+        }
+      });
+
+      if (orders.length === 0) {
+        alert('Please select at least one cookie.');
+        return;
+      }
+
+      // Collect form data
+      const name = document.getElementById('customer-name').value;
+      const contact = document.getElementById('contact-number').value;
+      const location = document.getElementById('pickup-location').value;
+      const date = document.getElementById('pickup-date').value;
+
+      const data = {
+        customerName: name,
+        contactNumber: contact,
+        pickupLocation: location,
+        pickupDate: date,
+        orders: orders,
+        total: orders.reduce((sum, item) => sum + item.price, 0)
+      };
+
+      try {
+        // Replace this URL with your deployed Google Apps Script Web App URL
+        const response = await fetch('https://script.google.com/macros/s/AKfycbwjZZxYchlD-p8B-BImXAKDmmIRr7beBNASfUwj8g39LdfEvivDYTHKo9kem6O9C4l5/exec', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: {'Content-Type': 'application/json'}
+        });
+
+        if (response.ok) {
+          alert('Thank you! Your order has been submitted.');
+          document.getElementById('pickup-form').reset();
+          cookieItems.forEach(item => item.querySelector('.quantity').textContent = 0);
+          updateSummary();
+        } else {
+          alert('Failed to submit order. Try again.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error submitting order.');
+      }
+    });
+  </script>
+</body>
+</html>
