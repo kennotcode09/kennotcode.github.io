@@ -169,6 +169,7 @@
           method: 'POST',
           body: JSON.stringify(data),
           headers: {'Content-Type': 'application/json'}
+          mode: 'no-cors'
         });
 
         if (response.ok) {
@@ -187,5 +188,6 @@
   </script>
 </body>
 </html>
+
 
 
